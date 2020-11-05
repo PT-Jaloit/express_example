@@ -1,29 +1,39 @@
 pipeline {
-  agent {
-    docker {
-      image 'node:10-alpine'
-      args '-p 3000:3000'
-    }
-
-  }
+  agent any
   stages {
-    stage('Build') {
+    stage('Docker build') {
       steps {
-        sh 'npm install'
+        sh 'docker build -t webapp:$BUILD_NUMBER .'
       }
     }
-
-    stage('Test') {
+    stage('Docker push to development') {
+          when {
+              branch 'Development'
+          }
       steps {
-        sh 'npm test'
+        withCredentials(bindings: [usernamePassword(credentialsId: 'acr', passwordVariable: 'pass', usernameVariable: 'user')]) {
+          sh '''docker login ${registry} --username $user --password $pass
+docker tag webapp:$BUILD_NUMBER ${registry}:dev
+docker push ${registry}:dev'''
+        }
+
       }
     }
-
-    stage('Deploy') {
+    stage('Docker push to master') {
+          when {
+              branch 'master'
+          }
       steps {
-        sh 'echo "Julkaise sovellus"'
+        withCredentials(bindings: [usernamePassword(credentialsId: 'acr', passwordVariable: 'pass', usernameVariable: 'user')]) {
+          sh '''docker login ${registry} --username $user --password $pass
+docker tag webapp:$BUILD_NUMBER ${registry}
+docker push ${registry}'''
+        }
+
       }
     }
-
+  }
+  environment {
+    registry = 'demo346576i643.azurecr.io'
   }
 }
