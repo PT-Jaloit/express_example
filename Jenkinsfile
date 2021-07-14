@@ -34,6 +34,6 @@ docker push ${registry}'''
     }
   }
   environment {
-    registry = 'demo346576i643.azurecr.io/webapp'
+    registry = 'demo35264758697.azurecr.io/webapp'
   }
 }
